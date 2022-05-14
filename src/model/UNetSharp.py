@@ -10,7 +10,7 @@ import torch
 import yaml
 
 from layers import ASPP, AttentionBlock
-from loss import FocalTverskyLoss
+from losses import FocalTverskyLoss
 
 
 patch_typeguard()
@@ -19,7 +19,7 @@ patch_typeguard()
 Adabound()
 
 
-# Global parameters for typeguard
+Global parameters for typeguard
 path = abspath(join(__file__, '..', '..', '..', 'configs', 'config.yaml'))
 with open(path, 'r') as f:
     doc = yaml.load(f)
