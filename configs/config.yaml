@@ -1,0 +1,37 @@
+n_classes: 6
+filters: [64, 256, 512, 1024, 2048]
+data:
+  n_classes: 6
+  augment: True
+  size: 224
+  batch_size: 128
+  num_workers: 4
+optimizer:
+  lr: 0.001
+  betas: (0.9, 0.999)
+  final_lr: 0.1
+  gamma: 0.001
+  eps: 0.00000001
+  weight_decay: 0
+  amsbound: False
+loss:
+  alpha: 0.7
+  beta: 0.3, 
+  gamma: 1.33
+  smooth: 0.000001
+trainer:
+  accelerator: gpu
+  devices: 1
+  max_epochs: 150
+  logger: True
+  callbacks:
+    - class_path: pytorch_lightning.callbacks.EarlyStopping
+      init_args:
+        monitor: val_loss
+        patience: 20
+        verbose: True
+    - class_path: pytorch_lightning.callbacks.ModelCheckpoint
+      init_args:
+        monitor: val_loss
+        filename: trained_model
+  enable_progress_bar: True
