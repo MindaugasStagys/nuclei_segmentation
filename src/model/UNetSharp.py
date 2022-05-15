@@ -19,7 +19,7 @@ patch_typeguard()
 Adabound()
 
 
-Global parameters for typeguard
+# Global parameters for typeguard
 path = abspath(join(__file__, '..', '..', '..', 'configs', 'config.yaml'))
 with open(path, 'r') as f:
     doc = yaml.load(f)
@@ -30,12 +30,12 @@ with open(path, 'r') as f:
 
 
 class UNetSharp(LightningModule):
-    def __init__(self):
+    def __init__(self, freeze_epochs: int = 0):
                #  lr: float, betas: tuple, final_lr: float,
                #  gamma: float, eps: float, weight_decay: float,
                #  amsbound: bool):
         super().__init__()
-
+        self.freeze_epochs = freeze_epochs
         # Optimizer parameters
 #        self.lr = lr
 #        self.betas = betas
@@ -193,9 +193,7 @@ class UNetSharp(LightningModule):
     @staticmethod
     def get_backbone():
         """Get pretrained encoder layers"""
-        backbone = create_model('seresnext101_32x4d')
-        for param in backbone.parameters():
-            param.requires_grad = False
+        backbone = create_model('seresnext101_32x4d', pretrained=True)
         return list(backbone.children())
 
     @typechecked
@@ -375,11 +373,19 @@ class UNetSharp(LightningModule):
         out : torch.Tensor
             Main output of semantic segmentation branch.
         """
-        e1 = self.en_block1(x)
-        e2 = self.en_block2(e1)
-        e3 = self.en_block3(e2)
-        e4 = self.en_block4(e3)
-        br = self.br_block(e4)
+        if self.trainer.current_epoch < self.freeze_epochs:
+            with torch.no_grad():
+                e1 = self.en_block1(x)
+                e2 = self.en_block2(e1)
+                e3 = self.en_block3(e2)
+                e4 = self.en_block4(e3)
+                br = self.br_block(e4)
+        else:
+            e1 = self.en_block1(x)
+            e2 = self.en_block2(e1)
+            e3 = self.en_block3(e2)
+            e4 = self.en_block4(e3)
+            br = self.br_block(e4)
         br = self.aspp(br)
         d4 = self.de_block_4(e1, e2, e3, e4, br)
         d3 = self.de_block_3(e1, e2, e3, d4, br)

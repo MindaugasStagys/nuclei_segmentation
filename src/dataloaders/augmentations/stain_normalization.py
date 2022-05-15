@@ -1,4 +1,4 @@
-from numpy import np
+import numpy as np
 
 
 def normalize_stain_macenko(img, tli: int = 240, alpha: int = 1, 
