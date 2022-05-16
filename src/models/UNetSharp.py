@@ -1,5 +1,5 @@
 from torchtyping import TensorType, patch_typeguard
-from torch.optim.lr_scheduler import OneCycleLR
+from pytorch_lightning import LightningModule
 from torch_optimizer import AdaBound
 from typeguard import typechecked
 from timm import create_model
@@ -8,8 +8,8 @@ import torch.nn as nn
 import torch
 import yaml
 
-from layers import ASPP, AttentionBlock
-from losses import FocalTverskyLoss
+from models.layers import ASPP, AttentionBlock
+from models.losses import FocalTverskyLoss
 
 
 patch_typeguard()
@@ -17,7 +17,7 @@ patch_typeguard()
 # Global parameters for typeguard
 path = abspath(join(__file__, '..', '..', '..', 'configs', 'config.yaml'))
 with open(path, 'r') as f:
-    doc = yaml.load(f)
+    doc = yaml.safe_load(f)
     size = doc['data']['size']
     filters = doc['filters']
     up_channels = filters[0] * 5
@@ -26,40 +26,58 @@ with open(path, 'r') as f:
 
 class UNetSharp(LightningModule):
     """UNetSharp model construction, training and inference methods"""
-    def __init__(self, freeze_epochs: int, lr: float, betas: tuple, 
-                 final_lr: float, gamma: float, eps: float, 
-                 weight_decay: float, amsbound: bool):
+    def __init__(self, freeze_epochs: int, optim_lr: float, optim_betas: tuple,
+                 optim_final_lr: float, optim_gamma: float, optim_eps: float, 
+                 optim_weight_decay: float, optim_amsbound: bool, 
+                 loss_alpha: float, loss_beta: float, loss_gamma: float,
+                 loss_smooth: float):
         """Initialize instances of a class
 
         Parameters
         ----------
         freeze_epochs : int
             For how many epochs should the backbone layers be freezed.
-        lr : float
+        optim_lr : float
             learning rate.
-        betas : tuple
+        optim_betas : tuple
             coefficients used for computing running averages of gradient and 
             its square.
-        final_lr : float
+        optim_final_lr : float
             Final (SGD) learning rate.
-        gamma : float
+        optim_gamma : float
             Convergence speed of the bound functions.
-        eps : float
+        optim_eps : float
             Term added to the denominator to improve numerical stability.
-        weight_decay : float
+        optim_weight_decay : float
             Weight decay (L2 penalty).
-        amsbound : bool
+        optim_amsbound : bool
             Whether to use the AMSBound variant of this algorithm.
+        loss_alpha : float
+            Weight of false positives.
+        loss_beta : float
+            Weight of false negatives.
+        loss_gamma: float
+            Focusing parameter.
+        loss_smooth: float
+            A small constant added to avoid zero and nan.
         """
         super().__init__()
         self.freeze_epochs = freeze_epochs
-        self.lr = lr
-        self.betas = tuple(betas)
-        self.final_lr = final_lr
-        self.gamma = gamma
-        self.eps = eps
-        self.weight_decay = weight_decay
-        self.amsbound = amsbound
+
+        # Optimizer parameters
+        self.optim_lr = optim_lr
+        self.optim_betas = tuple(optim_betas)
+        self.optim_final_lr = optim_final_lr
+        self.optim_gamma = optim_gamma
+        self.optim_eps = optim_eps
+        self.optim_weight_decay = optim_weight_decay
+        self.optim_amsbound = optim_amsbound
+        
+        # Loss parameters
+        self.loss_alpha = loss_alpha
+        self.loss_beta = loss_beta
+        self.loss_gamma = loss_gamma
+        self.loss_smooth = loss_smooth
 
         # Encoder
         backbone_layers = self.get_backbone()
@@ -420,10 +438,10 @@ class UNetSharp(LightningModule):
         loss = FocalTverskyLoss(
             inputs = mask_pred,
             targets = mask,
-            alpha = self.loss.alpha, 
-            beta = self.loss.beta,
-            gamma = self.loss.gamma, 
-            smooth = self.loss.smooth)
+            alpha = self.loss_alpha, 
+            beta = self.loss_beta,
+            gamma = self.loss_gamma, 
+            smooth = self.loss_smooth)
         self.log('train_loss', loss, prog_bar=True)
         return loss
 

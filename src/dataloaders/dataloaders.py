@@ -5,7 +5,7 @@ from os.path import join
 import numpy as np
 
 
-from datasets import PanNukeDataset
+from dataloaders.datasets import PanNukeDataset
 
 
 class PanNukeDataModule(LightningDataModule):

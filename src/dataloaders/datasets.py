@@ -4,8 +4,8 @@ import numpy as np
 import torch
 
 
-from augmentations.stain_normalization import normalize_stain_macenko
-from augmentations.transforms import RandomCrop, aug_random
+from dataloaders.augmentations.stain_normalization import normalize_stain_macenko
+from dataloaders.augmentations.transforms import RandomCrop, aug_random
 
 
 class PanNukeDataset(Dataset):

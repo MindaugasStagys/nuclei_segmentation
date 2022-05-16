@@ -11,18 +11,17 @@ data:
   test_fold: fold_3
 model:
   freeze_epochs: 10
-  lr: 0.001
-  betas: [0.9, 0.999]
-  final_lr: 0.1
-  gamma: 0.001
-  eps: 0.00000001
-  weight_decay: 0
-  amsbound: False
-loss:
-  alpha: 0.7
-  beta: 0.3, 
-  gamma: 1.33
-  smooth: 0.000001
+  optim_lr: 0.001
+  optim_betas: [0.9, 0.999]
+  optim_final_lr: 0.1
+  optim_gamma: 0.001
+  optim_eps: 0.00000001
+  optim_weight_decay: 0
+  optim_amsbound: False
+  loss_alpha: 0.7
+  loss_beta: 0.3, 
+  loss_gamma: 1.33
+  loss_smooth: 0.000001
 trainer:
   accelerator: gpu
   devices: 1

@@ -2,8 +2,8 @@ from imgaug import augmenters as iaa
 import numpy as np
 import random
 
-from augmentations.composition import Compose, OneOf
-import augmentations.functional as F
+from dataloaders.augmentations.composition import Compose, OneOf
+import dataloaders.augmentations.functional as F
 
 
 def to_tuple(param, low=None):

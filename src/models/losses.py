@@ -1,5 +1,6 @@
-from torch import nn, optim
 from torchtyping import TensorType, patch_typeguard
+from typeguard import typechecked
+from torch import nn, optim
 
 
 patch_typeguard()
@@ -7,6 +8,23 @@ patch_typeguard()
 
 @typechecked
 def FocalTverskyLoss(
+    """Focal Tversky loss function.
+
+    Parameters
+    ----------
+    inputs : torch.Tensor
+        Tensor of predictions.
+    targets : torch.Tensor
+        Tensor of ground truth.
+    loss_alpha : float
+        Weight of false positives.
+    loss_beta : float
+        Weight of false negatives.
+    loss_gamma: float
+        Focusing parameter.
+    loss_smooth: float
+        A small constant added to avoid zero and nan.
+    """
     inputs: TensorType['batch', 'N', 'size', 'size'], 
     targets: TensorType['batch', 'N', 'size', 'size'], 
     alpha: float, beta: float = 0.3, gamma: float = 4/3, 
