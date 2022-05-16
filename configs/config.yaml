@@ -1,15 +1,13 @@
-n_classes: 6
-filters: [64, 256, 512, 1024, 2048]
 data:
-  n_classes: 6
-  augment: True
   size: 224
-  batch_size: 128
+  batch_size: 64
   num_workers: 4
   train_fold: fold_1
   valid_fold: fold_2
   test_fold: fold_3
 model:
+  n_classes: 6
+  filters: [64, 256, 512, 1024, 2048]
   freeze_epochs: 10
   optim_lr: 0.001
   optim_betas: [0.9, 0.999]
@@ -19,11 +17,11 @@ model:
   optim_weight_decay: 0
   optim_amsbound: False
   loss_alpha: 0.7
-  loss_beta: 0.3, 
+  loss_beta: 0.3 
   loss_gamma: 1.33
   loss_smooth: 0.000001
 trainer:
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   max_epochs: 150
   logger: True

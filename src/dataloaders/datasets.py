@@ -20,6 +20,7 @@ class PanNukeDataset(Dataset):
         ])
         self.random_crop = RandomCrop(size, size)
         self.aug_random = aug_random()
+        self.to_tensor = transforms.ToTensor()
 
     def __len__(self):
         return len(self.images)
@@ -34,8 +35,8 @@ class PanNukeDataset(Dataset):
                 img=data['image'],
                 mask=data['mask'])
             data = self.aug_random(**data)
-            img = torch.from_numpy(data['image']).permute(2, 0, 1)
-            mask = torch.from_numpy(data['mask']).permute(2, 0, 1)
+            img = self.to_tensor(data['image'])
+            mask = self.to_tensor(data['mask'])
         else:
             img = self.transform(img)
             mask = torch.cat([

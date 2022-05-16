@@ -9,8 +9,9 @@ from dataloaders.datasets import PanNukeDataset
 
 
 class PanNukeDataModule(LightningDataModule):
-    def __init__(self, data_dir: str, batch_size: int, num_workers: int,
-                 size: int, train_fold: str, valid_fold: str, test_fold: str):
+    def __init__(self, data_dir: str, size: int, batch_size: int,
+                 num_workers: int, train_fold: str, valid_fold: str,
+                 test_fold: str):
         super().__init__()
         self.save_hyperparameters()
         self.data_dir = data_dir
