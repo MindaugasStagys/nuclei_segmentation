@@ -8,6 +8,10 @@ patch_typeguard()
 
 @typechecked
 def FocalTverskyLoss(
+    inputs: TensorType['batch', 'N', 'size', 'size'], 
+    targets: TensorType['batch', 'N', 'size', 'size'], 
+    alpha: float, beta: float = 0.3, gamma: float = 4/3, 
+    smooth: float = 1e-6):
     """Focal Tversky loss function.
 
     Parameters
@@ -25,11 +29,6 @@ def FocalTverskyLoss(
     loss_smooth: float
         A small constant added to avoid zero and nan.
     """
-    inputs: TensorType['batch', 'N', 'size', 'size'], 
-    targets: TensorType['batch', 'N', 'size', 'size'], 
-    alpha: float, beta: float = 0.3, gamma: float = 4/3, 
-    smooth: float = 1e-6
-):
     inputs = inputs.view(-1)
     targets = targets.view(-1)
     tp = (inputs * targets).sum()
