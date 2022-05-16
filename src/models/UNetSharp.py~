@@ -15,10 +15,6 @@ from losses import FocalTverskyLoss
 
 patch_typeguard()
 
-@OPTIMIZER_REGISTRY
-Adabound()
-
-
 # Global parameters for typeguard
 path = abspath(join(__file__, '..', '..', '..', 'configs', 'config.yaml'))
 with open(path, 'r') as f:
@@ -30,21 +26,19 @@ with open(path, 'r') as f:
 
 
 class UNetSharp(LightningModule):
-    def __init__(self, freeze_epochs: int = 0):
-               #  lr: float, betas: tuple, final_lr: float,
-               #  gamma: float, eps: float, weight_decay: float,
-               #  amsbound: bool):
+    def __init__(self, freeze_epochs: int, lr: float, betas: tuple, 
+                 final_lr: float, gamma: float, eps: float, 
+                 weight_decay: float, amsbound: bool):
         super().__init__()
         self.freeze_epochs = freeze_epochs
-        # Optimizer parameters
-#        self.lr = lr
-#        self.betas = betas
-#        self.final_lr = final_lr
-#        self.gamma = gamma
-#        self.eps = eps
-#        self.weight_decay = weight_decay 
-#        self.amsbound = amsbound
-#
+        self.lr = lr
+        self.betas = tuple(betas)
+        self.final_lr = final_lr
+        self.gamma = gamma
+        self.eps = eps
+        self.weight_decay = weight_decay 
+        self.amsbound = amsbound
+
         # Encoder
         backbone_layers = self.get_backbone()
         self.en_block1 = nn.Sequential(*backbone_layers[:3])
@@ -194,6 +188,10 @@ class UNetSharp(LightningModule):
     def get_backbone():
         """Get pretrained encoder layers"""
         backbone = create_model('seresnext101_32x4d', pretrained=True)
+        for m in backbone.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                m.weight.requires_grad_(False)
+                m.bias.requires_grad_(False)
         return list(backbone.children())
 
     @typechecked
@@ -424,15 +422,15 @@ class UNetSharp(LightningModule):
         img, mask = batch
         return self(img)
 
-#    def configure_optimizers(self):
-#        optimizer = AdaBound(
-#            [p for p in self.parameters() if p.requires_grad], 
-#            lr=self.lr,
-#            betas=self.betas,
-#            final_lr=self.final_lr,
-#            gamma=self.gamma,
-#            eps=self.eps,
-#            weight_decay=self.weight_decay,
-#            amsbound=self.amsbound)
-#        return optimizer
+    def configure_optimizers(self):
+        optimizer = AdaBound(
+            [p for p in self.parameters() if p.requires_grad], 
+            lr=self.lr,
+            betas=self.betas,
+            final_lr=self.final_lr,
+            gamma=self.gamma,
+            eps=self.eps,
+            weight_decay=self.weight_decay,
+            amsbound=self.amsbound)
+        return optimizer
 

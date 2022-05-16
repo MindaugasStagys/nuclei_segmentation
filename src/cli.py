@@ -2,7 +2,7 @@ from pytorch_lightning.utilities.cli import LightningCLI
 from os.path import abspath, join
 
 
-from dataloaders.dataloaders import PannukeDataModule
+from data.dataloaders import PannukeDataModule
 from models.UNetSharp import UNetSharp
 
 

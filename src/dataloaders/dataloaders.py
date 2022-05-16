@@ -76,28 +76,3 @@ class PanNukeDataModule(LightningDataModule):
                           batch_size=self.batch_size,
                           num_workers=self.num_workers)
 
-
-
-
-import matplotlib.pyplot as plt
-
-dataloader = PanNukeDataModule(
-    data_dir='../../data',
-    batch_size=16,
-    num_workers=1,
-    size=224, 
-    train_fold='fold_1', 
-    valid_fold='fold_2', 
-    test_fold='fold_3')
-
-dataloader.setup(stage='fit')
-train_data = dataloader.train_dataloader()
-ttt = next(iter(train_data))
-
-
-mask = np.argmax(ttt[1][5], axis=0).numpy()
-masked_data = np.ma.masked_where(mask == 5, mask)
-plt.imshow(ttt[0][5].permute(1, 2, 0))
-plt.imshow(masked_data, cmap='jet', alpha=0.5)
-plt.show()
-
