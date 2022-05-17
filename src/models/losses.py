@@ -52,7 +52,7 @@ class Tversky(nn.Module):
 
 class FocalTversky(nn.Module):
     """Focal Tversky loss."""
-    @tpechecked
+    @typechecked
     def __init__(self, beta: float = 0.3, gamma: float = 4/3):
         """
         Parameters
