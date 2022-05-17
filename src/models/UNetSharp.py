@@ -224,7 +224,7 @@ class UNetSharp(LightningModule):
     @staticmethod
     def get_backbone():
         """Get pretrained encoder layers and freeze batch normalization"""
-        backbone = create_model('seresnext101_32x4d', pretrained=True)
+        backbone = create_model('swsl_resnext101_32x4d', pretrained=True)
         for m in backbone.modules():
             if isinstance(m, nn.BatchNorm2d):
                 m.weight.requires_grad_(False)
