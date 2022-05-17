@@ -42,7 +42,7 @@ def normalize_stain_macenko(img, tli: int = 240, alpha: int = 1,
     try:
         eigvals, eigvecs = np.linalg.eigh(np.cov(od_hat.T))
     except np.linalg.LinAlgError as err:
-        logger.exception(f"Error in computing eigenvectors: {err}")
+        print(f'Error in computing eigenvectors: {err}')
         raise
 
     # Project on the plane spanned by the eigenvectors corresponding 
