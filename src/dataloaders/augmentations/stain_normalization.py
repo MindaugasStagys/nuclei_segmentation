@@ -39,7 +39,11 @@ def normalize_stain_macenko(img, tli: int = 240, alpha: int = 1,
     od_hat = od[~np.any(od < beta, axis=1)]
 
     # Compute eigenvectors
-    eigvals, eigvecs = np.linalg.eigh(np.cov(od_hat.T))
+    try:
+        eigvals, eigvecs = np.linalg.eigh(np.cov(od_hat.T))
+    except np.linalg.LinAlgError as err:
+        logger.exception(f"Error in computing eigenvectors: {err}")
+        raise
 
     # Project on the plane spanned by the eigenvectors corresponding 
     # to the two largest eigenvalues
