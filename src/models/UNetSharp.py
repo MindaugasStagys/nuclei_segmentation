@@ -218,7 +218,6 @@ class UNetSharp(LightningModule):
         self.optim_amsbound = optim_amsbound
         
         # Loss
-     #   self.loss = nn.CrossEntropyLoss()
         self.loss = FocalTversky(beta=loss_beta, gamma=loss_gamma)
 
     @staticmethod
@@ -433,7 +432,6 @@ class UNetSharp(LightningModule):
         img, mask = batch
         mask_pred = self(img)
         loss = self.loss(mask_pred, mask)
-        print(loss)
         self.log('train_loss', loss, prog_bar=True)
         return loss
 

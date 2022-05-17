@@ -30,10 +30,10 @@ def normalize_stain_macenko(img, tli: int = 240, alpha: int = 1,
                        [0.4062, 0.5581]])
     max_c_ref = np.array([1.9705, 1.0308])
     h, w = img.shape[:2]
-    img = img.reshape((-1, 3))
+    img_od = img.reshape((-1, 3))
 
     # Calculate optical density
-    od = -np.log((img.astype(float)+1) / tli)
+    od = -np.log((img_od.astype(float)+1) / tli)
 
     # Remove transparent pixels
     od_hat = od[~np.any(od < beta, axis=1)]
@@ -42,8 +42,8 @@ def normalize_stain_macenko(img, tli: int = 240, alpha: int = 1,
     try:
         eigvals, eigvecs = np.linalg.eigh(np.cov(od_hat.T))
     except np.linalg.LinAlgError as err:
-        print(f'Error in computing eigenvectors: {err}')
-        raise
+        print(f'Error in computing eigenvectors')
+        return [img.astype(np.uint8)]
 
     # Project on the plane spanned by the eigenvectors corresponding 
     # to the two largest eigenvalues

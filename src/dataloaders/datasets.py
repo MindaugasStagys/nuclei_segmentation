@@ -28,8 +28,8 @@ class PanNukeDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, ix: int):
-        img = self.images[ix]
-        mask = self.masks[ix]
+        img = np.array(self.images[ix])
+        mask = np.array(self.masks[ix])
         img = normalize_stain_macenko(img)[0]
         if self.augment:
             data = {'image': img, 'mask': mask}
