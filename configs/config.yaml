@@ -4,7 +4,7 @@ data:
   train_fold: fold_1
   valid_fold: fold_2
   test_fold: fold_3
-  batch_size: 64
+  batch_size: 8
   num_workers: 4
 model:
   filters: [64, 256, 512, 1024, 2048]
