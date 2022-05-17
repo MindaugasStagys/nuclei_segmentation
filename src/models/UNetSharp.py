@@ -441,7 +441,7 @@ class UNetSharp(LightningModule):
         img, mask = batch
         mask_pred = self(img)
         loss = self.loss(mask_pred, mask)
-        self.log('validation_loss', loss, prog_bar=True)
+        self.log('val_loss', loss, prog_bar=True)
         return loss
 
     def test_step(self, batch, batch_idx):

@@ -19,7 +19,6 @@ model:
   loss_beta: 0.3
   loss_gamma: 1.33
 trainer:
-  detect_anomaly: True
   accelerator: gpu
   devices: 1
   max_epochs: 150
