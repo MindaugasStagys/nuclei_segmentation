@@ -9,7 +9,7 @@ import torch
 import yaml
 
 from models.layers import ASPP, AttentionBlock
-from models.losses import TverskyLoss
+from models.losses import FocalTversky
 
 
 patch_typeguard()
@@ -21,16 +21,15 @@ with open(path, 'r') as f:
     size = doc['data']['size']
     filters = doc['model']['filters']
     up_channels = filters[0] * 5
-    n_classes = doc['model']['n_classes']
+    n_classes = doc['data']['n_classes']
 
 
 class UNetSharp(LightningModule):
-    """UNetSharp model construction, training and inference methods"""
-    def __init__(self, n_classes: int, filters: list, freeze_epochs: int, 
-                 optim_lr: float, optim_betas: tuple, optim_final_lr: float, 
-                 optim_gamma: float, optim_eps: float, optim_weight_decay: float, 
-                 optim_amsbound: bool, loss_alpha: float, loss_beta: float, 
-                 loss_gamma: float, loss_smooth: float):
+    """UNetSharp model construction, training and inference methods."""
+    def __init__(self, n_classes: int, filters: list, freeze_epochs: int,
+                 optim_lr: float, optim_betas: tuple, optim_final_lr: float,
+                 optim_gamma: float, optim_eps: float, optim_weight_decay: float,
+                 optim_amsbound: bool, loss_beta: float, loss_gamma: float):
         """
         Parameters
         ----------
@@ -55,14 +54,10 @@ class UNetSharp(LightningModule):
             Weight decay (L2 penalty).
         optim_amsbound : bool
             Whether to use the AMSBound variant of this algorithm.
-        loss_alpha : float
-            Weight of false positives.
         loss_beta : float
             Weight of false negatives.
         loss_gamma: float
             Focusing parameter.
-        loss_smooth: float
-            A small constant added to avoid zero and nan.
         """
         super().__init__()
         self.freeze_epochs = freeze_epochs
@@ -211,6 +206,7 @@ class UNetSharp(LightningModule):
         # output
         self.out_u = nn.Upsample(scale_factor=2, mode='bilinear')
         self.out_conv = nn.Conv2d(up_channels, n_classes, 3, padding=1)
+        self.softmax = nn.Softmax(dim=1)
 
         # Optimizer
         self.optim_lr = optim_lr
@@ -222,14 +218,13 @@ class UNetSharp(LightningModule):
         self.optim_amsbound = optim_amsbound
         
         # Loss
-        self.loss = TverskyLoss(
-            alpha=loss_alpha, beta=loss_beta,
-            gamma=loss_gamma, smooth=loss_smooth)
+     #   self.loss = nn.CrossEntropyLoss()
+        self.loss = FocalTversky(beta=loss_beta, gamma=loss_gamma)
 
     @staticmethod
     def get_backbone():
         """Get pretrained encoder layers and freeze batch normalization"""
-        backbone = create_model('seresnext101_32x4d', pretrained=False)
+        backbone = create_model('seresnext101_32x4d', pretrained=True)
         for m in backbone.modules():
             if isinstance(m, nn.BatchNorm2d):
                 m.weight.requires_grad_(False)
@@ -431,20 +426,21 @@ class UNetSharp(LightningModule):
         d3 = self.de_block_3(e1, e2, e3, d4, br)
         d2 = self.de_block_2(e1, e2, d3, d4, br)
         d1 = self.de_block_1(e1, d2, d3, d4, br)
-        out = torch.sigmoid(self.out_conv(self.out_u(d1)))
+        out = self.softmax(self.out_conv(self.out_u(d1)))
         return out
 
     def training_step(self, batch, batch_idx):
         img, mask = batch
         mask_pred = self(img)
-        loss = self.loss.focal_tversky(inputs=mask_pred, targets=mask)
+        loss = self.loss(mask_pred, mask)
+        print(loss)
         self.log('train_loss', loss, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         img, mask = batch
         mask_pred = self(img)
-        loss = self.loss.focal_tversky(inputs=mask_pred, targets=mask)
+        loss = self.loss(mask_pred, mask)
         self.log('validation_loss', loss, prog_bar=True)
         return loss
 

@@ -9,18 +9,19 @@ from dataloaders.datasets import PanNukeDataset
 
 
 class PanNukeDataModule(LightningDataModule):
-    def __init__(self, data_dir: str, size: int, batch_size: int,
-                 num_workers: int, train_fold: str, valid_fold: str,
-                 test_fold: str):
+    def __init__(self, data_dir: str, n_classes: int, size: int, 
+                 train_fold: str, valid_fold: str, test_fold: str, 
+                 batch_size: int, num_workers: int):
         super().__init__()
         self.save_hyperparameters()
         self.data_dir = data_dir
-        self.batch_size = batch_size
-        self.num_workers = num_workers
+        self.n_classes = n_classes
         self.size = size
         self.train_fold = train_fold
         self.valid_fold = valid_fold
         self.test_fold = test_fold
+        self.batch_size = batch_size
+        self.num_workers = num_workers
         self.test_df = self.ds_train = self.ds_valid = self.ds_test = None
 
     def setup(self, stage=None):
@@ -40,11 +41,13 @@ class PanNukeDataModule(LightningDataModule):
             self.ds_train = PanNukeDataset(
                 images=img_train,
                 masks=mask_train,
+                n_classes=self.n_classes,
                 size=self.size,
                 augment=True)
             self.ds_valid = PanNukeDataset(
                 images=img_valid,
                 masks=mask_valid,
+                n_classes=self.n_classes,
                 size=self.size,
                 augment=False)
 
@@ -58,6 +61,7 @@ class PanNukeDataModule(LightningDataModule):
             self.ds_test = PanNukeDataset(
                 images=img_test,
                 masks=mask_test,
+                n_classes=self.n_classes,
                 size=self.size,
                 augment=False)
 

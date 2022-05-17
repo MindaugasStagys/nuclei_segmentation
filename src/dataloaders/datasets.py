@@ -9,9 +9,11 @@ from dataloaders.augmentations.transforms import RandomCrop, aug_random
 
 
 class PanNukeDataset(Dataset):
-    def __init__(self, images, masks, size: int, augment: bool = False):
+    def __init__(self, images, masks, n_classes: int, 
+                 size: int, augment: bool = False):
         self.images = images
         self.masks = masks
+        self.n_classes = n_classes
         self.augment = augment
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
@@ -40,8 +42,12 @@ class PanNukeDataset(Dataset):
         else:
             img = self.transform(img)
             mask = torch.cat([
-                self.transform(self.masks[ix][:, :, x].astype(np.uint8))
-                for x in range(0, self.masks[ix].shape[2])
+                self.transform(self.masks[ix][:, :, i].astype(np.uint8))
+                for i in range(0, self.masks[ix].shape[2])
             ])
-        return img, mask
+        one_hot = torch.zeros(self.n_classes, mask.shape[1], mask.shape[2])
+        mask = np.argmax(mask, axis=0)
+        for i in range(0, self.n_classes):
+            one_hot[i, :, :][mask == i] = 1
+        return img, one_hot
 

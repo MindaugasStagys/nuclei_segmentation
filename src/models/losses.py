@@ -1,44 +1,38 @@
 from torchtyping import TensorType, patch_typeguard
 from typeguard import typechecked
 from torch import nn, optim
+import torch
 
 
 patch_typeguard()
 
 
-@typechecked
-class TverskyLoss:
-    """Tversky and Focal Tversky loss functions."""
-    def __init__(self, alpha: float, beta: float = 0.3, 
-                 gamma: float = 4/3, smooth: float = 1e-6):
+class Tversky(nn.Module):
+    """Tversky loss."""
+    @typechecked
+    def __init__(self, beta: float = 0.3, eps: float = 1e-7):
         """
         Parameters
         ----------
-        alpha : float
-            Weight of false positives.
         beta : float
             Weight of false negatives.
-        gamma: float
-            Focusing parameter.
-        smooth: float
-            A small constant added to avoid zero and nan.
+        eps: float
+            A small constant added for numerical stability.
         """
-        self.alpha = alpha
+        super().__init__()
         self.beta = beta
-        self.gamma = gamma
-        self.smooth = smooth
+        self.eps = eps
 
     @typechecked
-    def tversky(self, 
-                inputs: TensorType['batch', 'N', 'size', 'size'], 
-                targets: TensorType['batch', 'N', 'size', 'size']):
-        """Calculate Tversky loss function.
-
+    def forward(self, 
+                y_hat: TensorType['batch', 'N', 'size', 'size'], 
+                y: TensorType['batch', 'N', 'size', 'size']):
+        """
         Parameters
         ----------
-        inputs : torch.Tensor
+        y_hat : torch.Tensor
             Tensor of predictions.
-        targets : torch.Tensor
+        y : torch.Tensor
             Tensor of ground truth.
 
         Returns
@@ -46,26 +40,42 @@ class TverskyLoss:
         torch.Tensor
             Tversky loss.
         """
-        inputs = inputs.reshape(-1)
-        targets = targets.reshape(-1)
-        tp = (inputs * targets).sum()
-        fp = ((1-targets) * inputs).sum()
-        fn = (targets * (1-inputs)).sum()
-        tversky = (tp + self.smooth) / \
-            (tp + self.alpha*fp + self.beta*fn + self.smooth)
-        return tversky
+        y_hat = y_hat.reshape(-1)
+        y = y.reshape(-1)
+        tp = (y_hat * y).sum()
+        fp = ((1-y) * y_hat).sum()
+        fn = (y * (1-y_hat)).sum()
+        num = tp + self.eps
+        denom = tp + (1-self.beta)*fp + self.beta*fn + self.eps
+        return num / denom
 
-    @typechecked
-    def focal_tversky(self, 
-                      inputs: TensorType['batch', 'N', 'size', 'size'], 
-                      targets: TensorType['batch', 'N', 'size', 'size']):
-        """Calculate Focal Tversky loss function.
 
+class FocalTversky(nn.Module):
+    """Focal Tversky loss."""
+    @tpechecked
+    def __init__(self, beta: float = 0.3, gamma: float = 4/3):
+        """
         Parameters
         ----------
-        inputs : torch.Tensor
+        beta : float
+            Weight of false negatives.
+        gamma: float
+            Focusing parameter.
+        """
+        super().__init__()
+        self.tversky = Tversky(beta=beta)
+        self.gamma = gamma
+
+    @typechecked
+    def forward(self, 
+                y_hat: TensorType['batch', 'N', 'size', 'size'], 
+                y: TensorType['batch', 'N', 'size', 'size']):
+        """
+        Parameters
+        ----------
+        y_hat : torch.Tensor
             Tensor of predictions.
-        targets : torch.Tensor
+        y : torch.Tensor
             Tensor of ground truth.
 
         Returns
@@ -73,6 +83,6 @@ class TverskyLoss:
         torch.Tensor
             Focal Tversky loss.
         """
-        tversky = self.tversky(inputs, targets)
+        tversky = self.tversky(y_hat, y)
         return (1 - tversky)**self.gamma
 

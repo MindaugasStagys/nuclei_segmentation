@@ -14,6 +14,7 @@ class MyLightningCLI(LightningCLI):
            # 'model.test_dir': join(root, 'saved', 'preds'),
             'trainer.default_root_dir': join(root, 'saved')
         })
+        parser.link_arguments('data.n_classes', 'model.n_classes')
 
 
 if __name__ == '__main__':
