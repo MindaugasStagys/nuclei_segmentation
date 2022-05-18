@@ -4,9 +4,11 @@ from torch_optimizer import AdaBound
 from typeguard import typechecked
 from timm import create_model
 from os.path import abspath, join
+import numpy as np
 import torch.nn as nn
 import torch
 import yaml
+import os
 
 from models.layers import ASPP, AttentionBlock
 from models.losses import FocalTversky
@@ -29,7 +31,8 @@ class UNetSharp(LightningModule):
     def __init__(self, n_classes: int, filters: list, freeze_epochs: int,
                  optim_lr: float, optim_betas: tuple, optim_final_lr: float,
                  optim_gamma: float, optim_eps: float, optim_weight_decay: float,
-                 optim_amsbound: bool, loss_beta: float, loss_gamma: float):
+                 optim_amsbound: bool, loss_beta: float, loss_gamma: float,
+                 test_dir: str):
         """
         Parameters
         ----------
@@ -61,6 +64,7 @@ class UNetSharp(LightningModule):
         """
         super().__init__()
         self.freeze_epochs = freeze_epochs
+        self.test_dir = test_dir
 
         # Encoder
         backbone_layers = self.get_backbone()
@@ -445,6 +449,12 @@ class UNetSharp(LightningModule):
     def test_step(self, batch, batch_idx):
         img, mask = batch
         return self(img)
+
+    def test_epoch_end(self, outputs):
+        outputs = np.array(torch.cat(outputs))
+        if not os.path.exists(self.test_dir):
+            os.makedirs(self.test_dir)
+        np.save(os.path.join(self.test_dir, 'preds.npy'), outputs)
 
     def configure_optimizers(self):
         optimizer = AdaBound(

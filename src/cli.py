@@ -11,7 +11,7 @@ class MyLightningCLI(LightningCLI):
         root = abspath(join(__file__, '..', '..'))
         parser.set_defaults({
             'data.data_dir': join(root, 'data'),
-           # 'model.test_dir': join(root, 'saved', 'preds'),
+            'model.test_dir': join(root, 'saved', 'preds'),
             'trainer.default_root_dir': join(root, 'saved')
         })
         parser.link_arguments('data.n_classes', 'model.n_classes')
@@ -23,7 +23,6 @@ if __name__ == '__main__':
     cli = MyLightningCLI(
         model_class=UNetSharp,
         datamodule_class=PanNukeDataModule,
-        auto_registry=True,
         parser_kwargs={
             'fit': {'default_config_files': [default_config]},
             'test': {'default_config_files': [default_config]},
