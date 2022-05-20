@@ -51,3 +51,15 @@ class PanNukeDataset(Dataset):
             one_hot[i, :, :][mask == i] = 1
         return img, one_hot
 
+
+class PredDataset(Dataset):
+    def __init__(self, masks):
+        self.masks = masks
+
+    def __len__(self):
+        return len(self.masks)
+
+    def __getitem__(self, ix: int):
+        mask = torch.tensor(self.masks[ix])
+        return mask
+
