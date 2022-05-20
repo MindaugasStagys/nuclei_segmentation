@@ -117,3 +117,4 @@ if __name__ == '__main__':
     with open(join(root, 'saved', 'dice.out'), 'w') as f:
         f.write(str(dice[1].item()))
 
+
