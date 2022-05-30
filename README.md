@@ -1,10 +1,11 @@
 # U-Net\#
 
 Custom U-Net type architecture for multi-class nuclei segmentation.
+!(/assets/architecture.pdf)
 
 ## Data
 
-For this project we used PanNuke dataset
+For this project we used [PanNuke](https://jgamper.github.io/PanNukeDataset/) dataset.
 
 To download the dataset and prepare folder structure run:
 ```sh
