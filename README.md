@@ -1,7 +1,7 @@
 # U-Net\#
 
 Custom U-Net type architecture for multi-class nuclei segmentation.
-![](/assets/architecture.pdf)
+![Architecture](/assets/architecture.pdf)
 
 ## Data
 
