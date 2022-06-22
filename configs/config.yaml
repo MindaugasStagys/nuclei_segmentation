@@ -1,5 +1,6 @@
 data:
   n_classes: 6
+  background_cls: 5
   size: 224
   train_fold: fold_1
   valid_fold: fold_2
@@ -8,7 +9,7 @@ data:
   num_workers: 4
 model:
   filters: [64, 256, 512, 1024, 2048]
-  freeze_epochs: 10
+  freeze_epochs: 5
   optim_lr: 0.0001
   optim_betas: [0.9, 0.999]
   optim_final_lr: 0.1
