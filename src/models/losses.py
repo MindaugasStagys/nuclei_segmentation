@@ -59,7 +59,7 @@ class FocalTversky(nn.Module):
         ----------
         beta : float
             Weight of false negatives.
-        gamma: float
+        gamma : float
             Focusing parameter.
         """
         super().__init__()
