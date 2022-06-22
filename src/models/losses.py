@@ -1,7 +1,7 @@
+import torch
+from torch import nn, optim
 from torchtyping import TensorType, patch_typeguard
 from typeguard import typechecked
-from torch import nn, optim
-import torch
 
 
 patch_typeguard()

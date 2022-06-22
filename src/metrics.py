@@ -1,13 +1,14 @@
-from torchmetrics.functional import jaccard_index
-from torch.utils.data import DataLoader
-from typing_extensions import Literal
-from typeguard import typechecked
 from os.path import abspath, join
-from typing import Optional
 from sys import argv
+
 import numpy as np
 import torch
 import yaml
+from torch.utils.data import DataLoader
+from torchmetrics.functional import jaccard_index
+from typeguard import typechecked
+from typing import Optional
+from typing_extensions import Literal
 
 from dataloaders.datasets import PredDataset
 from dataloaders.dataloaders import PanNukeDataModule
@@ -173,3 +174,4 @@ def main(pred_filename):
 
 if __name__ == '__main__':
     main(argv[1])
+

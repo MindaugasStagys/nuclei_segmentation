@@ -1,6 +1,6 @@
-from torch import nn
-import torch.nn.functional as F
 import torch
+import torch.nn.functional as F
+from torch import nn
 
 
 class ASPPConv(nn.Sequential):
@@ -94,3 +94,4 @@ class AttentionBlock(nn.Module):
         psi = self.psi(psi)
         out = skip_connection * psi
         return out
+

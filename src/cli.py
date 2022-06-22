@@ -1,6 +1,6 @@
-from pytorch_lightning.utilities.cli import LightningCLI
 from os.path import abspath, join
 
+from pytorch_lightning.utilities.cli import LightningCLI
 
 from dataloaders.dataloaders import PanNukeDataModule
 from models.UNetSharp import UNetSharp
@@ -29,3 +29,4 @@ if __name__ == '__main__':
             'predict': {'default_config_files': [default_config]}
         }
     )
+

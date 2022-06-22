@@ -1,11 +1,12 @@
+import math
+import random
+
+import cv2
+import numpy as np
+import torch
+import torchvision.transforms.functional as F
 from scipy.ndimage.filters import gaussian_filter
 from functools import wraps
-import torchvision.transforms.functional as F
-import numpy as np
-import random
-import torch
-import math
-import cv2
 
 
 cv2.setNumThreads(0)
@@ -77,7 +78,6 @@ def motion_blur(img, ksize):
 
 def distort1(img, k=0, dx=0, dy=0):
     height, width = img.shape[:2]
-
     k = k * 0.00001
     dx = dx * width
     dy = dy * height
@@ -89,7 +89,6 @@ def distort1(img, k=0, dx=0, dy=0):
     r = d*(1+k*d*d)
     map_x = r*np.cos(theta) + width/2 + dx
     map_y = r*np.sin(theta) + height/2 + dy
-
     img = cv2.remap(img, map_x, map_y, interpolation=cv2.INTER_LINEAR, 
                     borderMode=cv2.BORDER_REFLECT_101)
     return img
@@ -135,6 +134,7 @@ def distort2(img, num_steps=10, xsteps=[], ysteps=[]):
                     interpolation=cv2.INTER_LINEAR,
                     borderMode=cv2.BORDER_REFLECT_101)
     return img
+
 
 def elastic_transform_fast(image, alpha, sigma, alpha_affine, random_state=None):
     """Elastic deformation of images as described in [Simard2003] (with modifications).

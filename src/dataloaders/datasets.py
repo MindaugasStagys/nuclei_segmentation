@@ -1,8 +1,7 @@
-from torch.utils.data import Dataset
-from torchvision import transforms
 import numpy as np
 import torch
-
+from torch.utils.data import Dataset
+from torchvision import transforms
 
 from dataloaders.augmentations.stain_normalization import normalize_stain_macenko
 from dataloaders.augmentations.transforms import RandomCrop, aug_random

@@ -1,9 +1,9 @@
+from os.path import join
+
+import numpy as np
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from torchvision import transforms
-from os.path import join
-import numpy as np
-
 
 from dataloaders.datasets import PanNukeDataset
 

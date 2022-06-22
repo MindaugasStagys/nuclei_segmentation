@@ -1,14 +1,15 @@
-from torchtyping import TensorType, patch_typeguard
-from pytorch_lightning import LightningModule
-from torch_optimizer import AdaBound
-from typeguard import typechecked
-from timm import create_model
-from os.path import abspath, join
+from os import makedirs
+from os.path import abspath, join, exists
+
 import numpy as np
-import torch.nn as nn
 import torch
+import torch.nn as nn
 import yaml
-import os
+from pytorch_lightning import LightningModule
+from timm import create_model
+from torch_optimizer import AdaBound
+from torchtyping import TensorType, patch_typeguard
+from typeguard import typechecked
 
 from models.layers import ASPP, AttentionBlock
 from models.losses import FocalTversky
@@ -452,9 +453,9 @@ class UNetSharp(LightningModule):
 
     def test_epoch_end(self, outputs):
         outputs = np.array(torch.cat(outputs))
-        if not os.path.exists(self.test_dir):
-            os.makedirs(self.test_dir)
-        np.save(os.path.join(self.test_dir, 'preds.npy'), outputs)
+        if not exists(self.test_dir):
+            makedirs(self.test_dir)
+        np.save(join(self.test_dir, 'preds.npy'), outputs)
 
     def configure_optimizers(self):
         optimizer = AdaBound(

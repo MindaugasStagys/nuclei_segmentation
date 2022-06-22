@@ -1,6 +1,7 @@
-from imgaug import augmenters as iaa
-import numpy as np
 import random
+
+import numpy as np
+from imgaug import augmenters as iaa
 
 from dataloaders.augmentations.composition import Compose, OneOf
 import dataloaders.augmentations.functional as F
@@ -316,3 +317,4 @@ def aug_random(prob=0.5):
             RandomBrightness(),
         ], prob=0.3)
     ])
+
