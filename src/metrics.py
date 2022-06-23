@@ -6,6 +6,7 @@ from os.path import abspath, join
 from typing import Optional
 from sys import argv
 import numpy as np
+import pandas as pd
 import torch
 import yaml
 
@@ -120,13 +121,18 @@ def main():
         batch_size = config['data']['batch_size']
         num_workers = config['data']['num_workers']
     ignore_cls = 5
+    cols = ['Neoplastic', 'Inflammatory', 'Connective', 
+            'Dead', 'Epithelial', 'Average', 'Binary']
 
-    test_masks = np.load(join(root, 'data', 'masks', f'{test_fold}.npy'))
-    pred_masks = np.load(join(root, 'saved', 'preds', 'preds_33.npy'))
-    types = np.load(join(root, 'data', 'types', f'{test_fold}.npy'))
+    test_masks = np.load(join(root, 'data', 'masks', f'{test_fold}.npy'), 
+                         mmap_mode='r')
+    pred_masks = np.load(join(root, 'saved', 'preds', 'preds_33.npy'),
+                         mmap_mode='r')
+    types = np.load(join(root, 'data', 'types', f'{test_fold}.npy'),
+                    mmap_mode='r')
 
     ds_test = PanNukeDatasetMasksOnly(
-        masks=test_masks_by_group[i],
+        masks=test_masks,
         n_classes=n_classes,
         size=size)
     target_dataloader = DataLoader(
@@ -147,36 +153,21 @@ def main():
         pred_dl=pred_dataloader,
         target_dl=target_dataloader,
         ignore_cls=ignore_cls)
-    print(f'Mean Jaccard score: {iou[1]}')
-    print(f'Jaccard score per class: {list(iou[0])}')
-    print(f'Binary Jaccard score: {iou_binary}')
-    np.savetxt(join(root, 'saved', 'iou_per_class.out'),
-               iou[0],
-               delimiter=',')
-    with open(join(root, 'saved', 'iou_average.out'), 'w') as f:
-        f.write(str(iou[1].item()))
-    with open(join(root, 'saved', 'iou_binary.out'), 'w') as f:
-        f.write(str(iou_binary))
+    list_iou_all = list(iou[0][:ignore_cls]) + \
+        list(iou[0][(1 + ignore_cls):]) + [iou[1]] + [iou_binary]
 
-    dice = dice(
+    coef_dice = dice(
         pred_dl=pred_dataloader,
         target_dl=target_dataloader,
         n_classes=n_classes,
         ignore_cls=ignore_cls)
-    dice_binary = dice_binary(
+    coef_dice_binary = dice_binary(
         pred_dl=pred_dataloader,
         target_dl=target_dataloader,
         ignore_cls=ignore_cls)
-    print(f'Mean Dice score: {dice[1]}')
-    print(f'Dice score per class: {list(dice[0])}')
-    print(f'Binary Dice score: {dice_binary}')
-    np.savetxt(join(root, 'saved', 'dice_per_class.out'),
-               dice[0],
-               delimiter=',')
-    with open(join(root, 'saved', 'dice_average.out'), 'w') as f:
-        f.write(str(dice[1].item()))
-    with open(join(root, 'saved', 'dice_binary.out'), 'w') as f:
-        f.write(str(dice_binary))
+    list_dice_all = list(coef_dice[0][:ignore_cls]) + \
+        list(coef_dice[0][(1 + ignore_cls):]) + \
+        [coef_dice[1]] + [coef_dice_binary]
 
     # CALCULATE METRICS BY TISSUE ---------------------------------------------
 
@@ -185,11 +176,9 @@ def main():
     preds_by_group = [pred_masks[types == i] for i in unique_types]
     
     iou_by_group = []
-    iou_binary_by_group = []
     dice_by_group = []
-    dice_binary_by_group = []
 
-    for i in enumerate(unique_types):
+    for i, v in enumerate(unique_types):
         ds_test = PanNukeDatasetMasksOnly(
             masks=test_masks_by_group[i],
             n_classes=n_classes,
@@ -208,24 +197,36 @@ def main():
             target_dl=target_dataloader,
             n_classes=n_classes,
             ignore_cls=ignore_cls)
-        iou_by_group.append(iou)
         iou_binary = jaccard_binary(
             pred_dl=pred_dataloader,
             target_dl=target_dataloader,
             ignore_cls=ignore_cls)
-        iou_binary_by_group.append(iou_binary)
+        list_iou = list(iou[0][:ignore_cls]) + \
+            list(iou[0][(1 + ignore_cls):]) + [iou[1]] + [iou_binary]
+        iou_by_group.append(list_iou)
 
-        dice = dice(
+        coef_dice = dice(
             pred_dl=pred_dataloader,
             target_dl=target_dataloader,
             n_classes=n_classes,
-            ignore_cls=ignore_cls)
-        dice_by_group.append(dice)
-        dice_binary = dice_binary(
+            ignore_cls=ignore_cls)        
+        coef_dice_binary = dice_binary(
             pred_dl=pred_dataloader,
             target_dl=target_dataloader,
             ignore_cls=ignore_cls)
-        dice_binary_by_group.append(dice_binary)
+        list_dice = list(coef_dice[0][:ignore_cls]) + \
+            list(coef_dice[0][(1 + ignore_cls):]) + \
+            [coef_dice[1]] + [coef_dice_binary]
+        dice_by_group.append(list_dice)
+
+    iou_by_group.append(list_iou_all)
+    dice_by_group.append(list_dice_all)
+    index = list(unique_types)
+    index.extend(['Average'])
+    df_iou = pd.DataFrame(iou_by_group, columns=cols, index=index)
+    df_dice = pd.DataFrame(dice_by_group, columns=cols, index=index)
+    df_iou.to_csv(join(root, 'saved', 'iou.csv'))
+    df_dice.to_csv(join(root, 'saved', 'dice.csv'))
 
 
 if __name__ == '__main__':
