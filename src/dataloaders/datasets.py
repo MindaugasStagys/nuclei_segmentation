@@ -51,6 +51,32 @@ class PanNukeDataset(Dataset):
         return img, one_hot
 
 
+class PanNukeDatasetMasksOnly(Dataset):
+    def __init__(self, masks, n_classes: int, size: int):
+        self.masks = masks
+        self.n_classes = n_classes
+        self.transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize((size, size)),
+            transforms.ToTensor()
+        ])
+
+    def __len__(self):
+        return len(self.masks)
+
+    def __getitem__(self, ix: int):
+        mask = np.array(self.masks[ix])
+        mask = torch.cat([
+            self.transform(self.masks[ix][:, :, i].astype(np.uint8))
+            for i in range(0, self.masks[ix].shape[2])
+        ])
+        one_hot = torch.zeros(self.n_classes, mask.shape[1], mask.shape[2])
+        mask = np.argmax(mask, axis=0)
+        for i in range(0, self.n_classes):
+            one_hot[i, :, :][mask == i] = 1
+        return one_hot
+
+
 class PredDataset(Dataset):
     def __init__(self, masks):
         self.masks = masks

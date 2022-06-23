@@ -1,27 +1,27 @@
+from torchmetrics.functional import jaccard_index
+from torch.utils.data import DataLoader
+from typing_extensions import Literal
+from typeguard import typechecked
 from os.path import abspath, join
+from typing import Optional
 from sys import argv
-
 import numpy as np
 import torch
 import yaml
-from torch.utils.data import DataLoader
-from torchmetrics.functional import jaccard_index
-from typeguard import typechecked
-from typing import Optional
-from typing_extensions import Literal
 
-from dataloaders.datasets import PredDataset
+from dataloaders.datasets import PanNukeDatasetMasksOnly, PredDataset
 from dataloaders.dataloaders import PanNukeDataModule
 
 
 @typechecked
 def jaccard(pred_dl: DataLoader, target_dl: DataLoader,
             n_classes: int, ignore_cls: int):
-    list_inter = list_union = [[] for _ in range(n_classes)]
+    list_inter = [[] for _ in range(n_classes)]
+    list_union = [[] for _ in range(n_classes)]
     pred_iter = iter(pred_dl)
     for i, target in enumerate(target_dl):
         pred = next(pred_iter).argmax(1).view(-1).type(torch.uint8)
-        target = target[1].argmax(1).view(-1).type(torch.uint8)
+        target = target.argmax(1).view(-1).type(torch.uint8)
         for sem_class in range(n_classes):
             pred_ind = (pred == sem_class)
             target_ind = (target == sem_class)
@@ -43,13 +43,14 @@ def jaccard(pred_dl: DataLoader, target_dl: DataLoader,
 
 @typechecked
 def jaccard_binary(pred_dl: DataLoader, target_dl: DataLoader, ignore_cls: int):
-    inter_sum = union_sum = 0
+    inter_sum = 0
+    union_sum = 0
     pred_iter = iter(pred_dl)
     for i, target in enumerate(target_dl):
         pred = next(pred_iter).argmax(1).view(-1).type(torch.uint8) + 1
         pred[pred == (ignore_cls+1)] = 0
         pred[pred > 0] = 1
-        target = target[1].argmax(1).view(-1).type(torch.uint8) + 1
+        target = target.argmax(1).view(-1).type(torch.uint8) + 1
         target[target == (ignore_cls+1)] = 0
         target[target > 0] = 1
         pred_ind = (pred == 1)
@@ -66,11 +67,12 @@ def jaccard_binary(pred_dl: DataLoader, target_dl: DataLoader, ignore_cls: int):
 @typechecked
 def dice(pred_dl: DataLoader, target_dl: DataLoader,
          n_classes: int, ignore_cls: int):
-    list_inter = list_denom = [[] for _ in range(n_classes)]
+    list_inter = [[] for _ in range(n_classes)]
+    list_denom = [[] for _ in range(n_classes)]
     pred_iter = iter(pred_dl)
     for i, target in enumerate(target_dl):
         pred = next(pred_iter).argmax(1).view(-1).type(torch.uint8)
-        target = target[1].argmax(1).view(-1).type(torch.uint8)
+        target = target.argmax(1).view(-1).type(torch.uint8)
         for sem_class in range(n_classes):
             pred_ind = (pred == sem_class)
             target_ind = (target == sem_class)
@@ -90,13 +92,14 @@ def dice(pred_dl: DataLoader, target_dl: DataLoader,
 
 @typechecked
 def dice_binary(pred_dl: DataLoader, target_dl: DataLoader, ignore_cls: int):
-    inter_sum = denom_sum = 0
+    inter_sum = 0
+    denom_sum = 0
     pred_iter = iter(pred_dl)
     for i, target in enumerate(target_dl):
         pred = next(pred_iter).argmax(1).view(-1).type(torch.uint8) + 1
         pred[pred == (ignore_cls+1)] = 0
         pred[pred > 0] = 1
-        target = target[1].argmax(1).view(-1).type(torch.uint8) + 1
+        target = target.argmax(1).view(-1).type(torch.uint8) + 1
         target[target == (ignore_cls+1)] = 0
         target[target > 0] = 1
         pred_ind = (pred == 1)
@@ -106,30 +109,34 @@ def dice_binary(pred_dl: DataLoader, target_dl: DataLoader, ignore_cls: int):
     return 2.0 * inter_sum / denom_sum
 
 
-def main(pred_filename):
+def main():
     root = abspath(join(__file__, '..', '..'))
     config_path = join(root, 'configs', 'config.yaml')
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
-        test_dataloader = PanNukeDataModule(
-            data_dir=join(root, 'data'),
-            n_classes=config['data']['n_classes'],
-            size=config['data']['size'],
-            train_fold=config['data']['train_fold'],
-            valid_fold=config['data']['valid_fold'],
-            test_fold=config['data']['test_fold'],
-            batch_size=config['data']['batch_size'],
-            num_workers=config['data']['num_workers'])
-        masks = np.load(join(root, 'saved', 'preds', pred_filename))
-        pred_dataloader = DataLoader(
-            PredDataset(masks=masks),
-            batch_size=config['data']['batch_size'],
-            num_workers=config['data']['num_workers'])
         n_classes = config['data']['n_classes']
-        ignore_cls = config['data']['background_cls']
+        size = config['data']['size']
+        test_fold = config['data']['test_fold']
+        batch_size = config['data']['batch_size']
+        num_workers = config['data']['num_workers']
+    ignore_cls = 5
 
-    test_dataloader.setup(stage='test')
-    target_dataloader = test_dataloader.test_dataloader()
+    test_masks = np.load(join(root, 'data', 'masks', f'{test_fold}.npy'))
+    pred_masks = np.load(join(root, 'saved', 'preds', 'preds_33.npy'))
+    types = np.load(join(root, 'data', 'types', f'{test_fold}.npy'))
+
+    ds_test = PanNukeDatasetMasksOnly(
+        masks=test_masks_by_group[i],
+        n_classes=n_classes,
+        size=size)
+    target_dataloader = DataLoader(
+        ds_test,
+        batch_size=batch_size,
+        num_workers=num_workers)
+    pred_dataloader = DataLoader(
+        PredDataset(masks=pred_masks),
+        batch_size=batch_size,
+        num_workers=num_workers)
 
     iou = jaccard(
         pred_dl=pred_dataloader,
@@ -171,7 +178,56 @@ def main(pred_filename):
     with open(join(root, 'saved', 'dice_binary.out'), 'w') as f:
         f.write(str(dice_binary))
 
+    # CALCULATE METRICS BY TISSUE ---------------------------------------------
+
+    unique_types = np.unique(types)
+    test_masks_by_group = [test_masks[types == i] for i in unique_types]
+    preds_by_group = [pred_masks[types == i] for i in unique_types]
+    
+    iou_by_group = []
+    iou_binary_by_group = []
+    dice_by_group = []
+    dice_binary_by_group = []
+
+    for i in enumerate(unique_types):
+        ds_test = PanNukeDatasetMasksOnly(
+            masks=test_masks_by_group[i],
+            n_classes=n_classes,
+            size=size)
+        target_dataloader = DataLoader(
+            ds_test,
+            batch_size=batch_size,
+            num_workers=num_workers)
+        pred_dataloader = DataLoader(
+            PredDataset(masks=preds_by_group[i]),
+            batch_size=batch_size,
+            num_workers=num_workers)
+        
+        iou = jaccard(
+            pred_dl=pred_dataloader,
+            target_dl=target_dataloader,
+            n_classes=n_classes,
+            ignore_cls=ignore_cls)
+        iou_by_group.append(iou)
+        iou_binary = jaccard_binary(
+            pred_dl=pred_dataloader,
+            target_dl=target_dataloader,
+            ignore_cls=ignore_cls)
+        iou_binary_by_group.append(iou_binary)
+
+        dice = dice(
+            pred_dl=pred_dataloader,
+            target_dl=target_dataloader,
+            n_classes=n_classes,
+            ignore_cls=ignore_cls)
+        dice_by_group.append(dice)
+        dice_binary = dice_binary(
+            pred_dl=pred_dataloader,
+            target_dl=target_dataloader,
+            ignore_cls=ignore_cls)
+        dice_binary_by_group.append(dice_binary)
+
 
 if __name__ == '__main__':
-    main(argv[1])
+    main()
 
