@@ -1,6 +1,5 @@
 data:
   n_classes: 6
-  background_cls: 5
   size: 224
   train_fold: fold_1
   valid_fold: fold_2
