@@ -110,7 +110,7 @@ def dice_binary(pred_dl: DataLoader, target_dl: DataLoader, ignore_cls: int):
     return 2.0 * inter_sum / denom_sum
 
 
-def main():
+def main(pred_file):
     root = abspath(join(__file__, '..', '..'))
     config_path = join(root, 'configs', 'config.yaml')
     with open(config_path, 'r') as f:
@@ -126,7 +126,7 @@ def main():
 
     test_masks = np.load(join(root, 'data', 'masks', f'{test_fold}.npy'), 
                          mmap_mode='r')
-    pred_masks = np.load(join(root, 'saved', 'preds', 'preds_33.npy'),
+    pred_masks = np.load(join(root, 'saved', 'preds', pred_file),
                          mmap_mode='r')
     types = np.load(join(root, 'data', 'types', f'{test_fold}.npy'),
                     mmap_mode='r')
@@ -230,5 +230,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(argv[1])
 
